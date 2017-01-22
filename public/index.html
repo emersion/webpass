@@ -8,7 +8,22 @@
 		<script type="text/javascript" src="node_modules/openpgp/dist/openpgp.min.js"></script>
 	</head>
 	<body>
-		<div id="app"></div>
+		<div id="app">
+			<h1>webpass</h1>
+
+			<input type="search" v-model="query" placeholder="Search a password..." autofocus>
+			<ul>
+				<li v-for="item in filteredItems">
+					<a href="#" v-on:click.prevent="show(item)">{{ item }}</a>
+				</li>
+			</ul>
+
+			<div v-if="selectedItem">
+				<h2>{{ selectedItem.name }}</h2>
+				<pre>{{ selectedItem.password }}</pre>
+				<pre>{{ selectedItem.metadata }}</pre>
+			</div>
+		</div>
 
 		<script type="text/javascript" src="js/main.js"></script>
 	</body>
