@@ -1,0 +1,22 @@
+{
+  "name": "webpass",
+  "version": "0.1.0",
+  "description": "A web interface for pass, a UNIX password manager",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/emersion/webpass.git"
+  },
+  "author": "emersion (http://emersion.fr)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/emersion/webpass/issues"
+  },
+  "homepage": "https://github.com/emersion/webpass#readme",
+  "dependencies": {
+    "openpgp": "^2.3.5",
+    "vue": "^2.1.10"
+  }
+}
