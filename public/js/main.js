@@ -7,6 +7,7 @@ new Vue({
 		items: [],
 		selectedItem: null,
 		keys: null,
+		unlock: null,
 	},
 	computed: {
 		filteredItems() {
@@ -37,7 +38,7 @@ new Vue({
 		},
 		fetchKeys() {
 			if (this.keys !== null) {
-				return Promise.resolve(this.keys)
+				return this.keys
 			}
 
 			return fetch('pass/keys.gpg')
@@ -49,24 +50,33 @@ new Vue({
 					throw err[0]
 				}
 
-				keys = keys
-				.filter(key => key.verifyPrimaryKey() === openpgp.enums.keyStatus.valid)
-				.map(key => {
-					while (!key.primaryKey.isDecrypted) {
-						// TODO: use a password entry
-						let passphrase = prompt('Password')
-						if (!passphrase) {
-							throw new Error('Cancelled')
-						}
-						if (key.decrypt(passphrase)) {
-							break
-						}
-					}
-					return key
-				})
+				keys = keys.filter(key => key.verifyPrimaryKey() === openpgp.enums.keyStatus.valid)
 
-				this.keys = keys
-				return keys
+				return new Promise((resolve, reject) => {
+					this.unlock = passphrase => {
+						if (!passphrase) {
+							this.unlock = null
+							return reject('Cancelled')
+						}
+
+						for (let i = 0; i < keys.length; i++) {
+							const key = keys[i]
+							if (key.primaryKey.isDecrypted) {
+								continue
+							}
+
+							if (!key.decrypt(passphrase)) {
+								// TODO: show error
+								console.error('Invalid passphrase')
+								return
+							}
+						}
+
+						this.unlock = null
+						this.keys = Promise.resolve(keys)
+						resolve(keys)
+					}
+				})
 			})
 		},
 		decrypt(buf) {

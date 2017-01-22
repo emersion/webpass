@@ -18,6 +18,8 @@
 				</li>
 			</ul>
 
+			<ask-pass v-if="unlock" v-on:submit="unlock"></ask-pass>
+
 			<div v-if="selectedItem">
 				<h2>{{ selectedItem.name }}</h2>
 				<pre>{{ selectedItem.password }}</pre>
@@ -25,6 +27,19 @@
 			</div>
 		</div>
 
+		<template id="ask-pass-template">
+			<form v-on:submit.prevent="submit()">
+				<h2>unlock private key</h2>
+				<p>A passphrase is required to unlock the OpenPGP private key.</p>
+				<p><input type="password" v-model="passphrase"></p>
+				<p>
+					<button type="button" v-on:click="cancel">cancel</button>
+					<button type="submit">unlock</button>
+				</p>
+			</form>
+		</template>
+
+		<script type="text/javascript" src="js/askpass.js"></script>
 		<script type="text/javascript" src="js/main.js"></script>
 	</body>
 </html>
