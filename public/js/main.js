@@ -39,7 +39,9 @@ new Vue({
 	methods: {
 		request(url) {
 			const h = new Headers()
-			h.set('Authorization', 'Basic '+btoa(this.credentials.username+':'+this.credentials.password))
+			if (this.credentials.username !== "" || this.credentials.password !== "") {
+				h.set('Authorization', 'Basic '+btoa(this.credentials.username+':'+this.credentials.password))
+			}
 
 			return fetch(url, {
 				credentials: 'include',
@@ -119,7 +121,7 @@ new Vue({
 			this.$refs['error-bar'].open()
 		},
 	},
-	created() {
+	mounted() {
 		const list = () => {
 			return this.request('pass/store')
 			.then(checkResponse)

@@ -27,6 +27,23 @@ type Server struct {
 func (s *Server) Start(e *echo.Echo) error {
 	g := e.Group("/pass")
 
+	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			// 'unsafe-eval' is needed by vue, 'unsafe-inline' is needed by vue-material
+			const csp = "default-src 'self' 'unsafe-eval' 'unsafe-inline';" +
+				"object-src 'none';" +
+				"frame-ancestors 'none';" +
+				"form-action 'none';" +
+				"block-all-mixed-content"
+
+			h := c.Response().Header()
+			h.Set("X-Frame-Options", "DENY")
+			h.Set("Content-Security-Policy", csp)
+
+			return next(c)
+		}
+	})
+
 	g.Use(middleware.BasicAuth(func(username, password string, c echo.Context) bool {
 		u, err := s.Backend.Auth(username, password)
 		if err != nil {
