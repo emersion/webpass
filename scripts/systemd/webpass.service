@@ -6,7 +6,7 @@ After=network.target
 Type=simple
 User=user
 Group=user
-WorkingDirectory=/home/user
+WorkingDirectory=/home/user/go/src/github.com/emersion/webpass
 ExecStart=/home/user/go/bin/webpass
 Restart=always
 Environment=PORT=8080
