@@ -1,6 +1,7 @@
 package pass
 
 import (
+	"errors"
 	"io"
 	"os"
 	"path/filepath"
@@ -57,5 +58,10 @@ func (s *Store) List() ([]string, error) {
 }
 
 func (s *Store) Open(item string) (io.ReadCloser, error) {
-	return os.Open(filepath.Join(s.Path, item))
+	p := filepath.Join(s.Path, item)
+	if !filepath.HasPrefix(p, s.Path) {
+		// Make sure the requested item is *in* the password store
+		return nil, errors.New("Invalid item path")
+	}
+	return os.Open(p)
 }
