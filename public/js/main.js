@@ -1,5 +1,9 @@
 openpgp.initWorker({ path: 'node_modules/openpgp/dist/openpgp.worker.min.js' })
 
+Vue.use(VueMaterial)
+
+const errCancelled = new Error('Cancelled')
+
 new Vue({
 	el: '#app',
 	data: {
@@ -7,7 +11,7 @@ new Vue({
 		items: [],
 		selectedItem: null,
 		keys: null,
-		unlock: null,
+		error: null,
 	},
 	computed: {
 		filteredItems() {
@@ -24,6 +28,7 @@ new Vue({
 			.then(list => {
 				this.items = list.map(item => item.replace(/\.gpg$/, ''))
 			})
+			.catch(this.showError)
 		},
 		show(name) {
 			return fetch('pass/store/'+name+'.gpg')
@@ -35,6 +40,11 @@ new Vue({
 				return { name, password, metadata }
 			})
 			.then(data => this.selectedItem = data)
+			.catch(err => {
+				if (err != errCancelled) {
+					this.showError(err)
+				}
+			})
 		},
 		fetchKeys() {
 			if (this.keys !== null) {
@@ -52,30 +62,24 @@ new Vue({
 
 				keys = keys.filter(key => key.verifyPrimaryKey() === openpgp.enums.keyStatus.valid)
 
-				return new Promise((resolve, reject) => {
-					this.unlock = passphrase => {
-						if (!passphrase) {
-							this.unlock = null
-							return reject('Cancelled')
+				return this.$refs['ask-pass'].ask()
+				.catch(() => {
+					throw errCancelled
+				})
+				.then(passphrase => {
+					for (let i = 0; i < keys.length; i++) {
+						const key = keys[i]
+						if (key.primaryKey.isDecrypted) {
+							continue
 						}
 
-						for (let i = 0; i < keys.length; i++) {
-							const key = keys[i]
-							if (key.primaryKey.isDecrypted) {
-								continue
-							}
-
-							if (!key.decrypt(passphrase)) {
-								// TODO: show error
-								console.error('Invalid passphrase')
-								return
-							}
+						if (!key.decrypt(passphrase)) {
+							throw new Error('Invalid passphrase')
 						}
-
-						this.unlock = null
-						this.keys = Promise.resolve(keys)
-						resolve(keys)
 					}
+
+					this.keys = Promise.resolve(keys)
+					return keys
 				})
 			})
 		},
@@ -87,6 +91,10 @@ new Vue({
 				privateKey: keys[0],
 			}))
 			.then(plaintext => plaintext.data)
+		},
+		showError(err) {
+			this.error = err.toString()
+			this.$refs['error-bar'].open()
 		},
 	},
 	created() {

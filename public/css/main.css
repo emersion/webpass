@@ -1,0 +1,17 @@
+html, body, #app, #app > .md-layout {
+	height: 100%;
+	overflow: hidden;
+}
+
+#main-layout {
+	overflow: hidden;
+}
+
+#main-layout > .md-layout {
+	padding: 16px;
+}
+
+#main-list {
+	overflow-y: auto;
+	flex: 1;
+}

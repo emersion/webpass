@@ -1,8 +1,8 @@
 package webpass
 
 import (
+	"io"
 	"net/http"
-	"os"
 
 	"github.com/emersion/webpass/pass"
 	"github.com/labstack/echo"
@@ -10,20 +10,20 @@ import (
 
 type Config struct {
 	Host string
+	Store *pass.Store
+	OpenPGPKey func() (io.ReadCloser, error)
 }
 
 func Start(e *echo.Echo, cfg *Config) error {
-	s := pass.NewDefaultStore()
-
 	e.GET("/pass/store", func(c echo.Context) error {
-		list, err := s.List()
+		list, err := cfg.Store.List()
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, newAPIError(err))
 		}
 		return c.JSON(http.StatusOK, list)
 	})
 	e.GET("/pass/store/*.gpg", func(c echo.Context) error {
-		r, err := s.Open(c.Param("*"))
+		r, err := cfg.Store.Open(c.Param("*"))
 		if err != nil {
 			return c.JSON(http.StatusNotFound, newAPIError(err))
 		}
@@ -32,13 +32,13 @@ func Start(e *echo.Echo, cfg *Config) error {
 		return c.Stream(http.StatusOK, "application/pgp-encrypted", r)
 	})
 	e.GET("/pass/keys.gpg", func(c echo.Context) error {
-		f, err := os.Open("private-key.gpg")
+		r, err := cfg.OpenPGPKey()
 		if err != nil {
 			return c.JSON(http.StatusNotFound, newAPIError(err))
 		}
-		defer f.Close()
+		defer r.Close()
 
-		return c.Stream(http.StatusOK, "application/pgp-keys", f)
+		return c.Stream(http.StatusOK, "application/pgp-keys", r)
 	})
 
 	e.Static("/node_modules", "node_modules")

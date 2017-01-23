@@ -17,6 +17,7 @@
   "homepage": "https://github.com/emersion/webpass#readme",
   "dependencies": {
     "openpgp": "^2.3.5",
-    "vue": "^2.1.10"
+    "vue": "^2.1.10",
+    "vue-material": "^0.6.3"
   }
 }

@@ -4,39 +4,59 @@
 		<meta charset="utf-8">
 		<title>webpass</title>
 
+		<link rel="stylesheet" href="node_modules/vue-material/dist/vue-material.css">
+		<link rel="stylesheet" href="css/main.css">
+
 		<script type="text/javascript" src="node_modules/vue/dist/vue.min.js"></script>
+		<script type="text/javascript" src="node_modules/vue-material/dist/vue-material.js"></script>
 		<script type="text/javascript" src="node_modules/openpgp/dist/openpgp.min.js"></script>
 	</head>
 	<body>
 		<div id="app">
-			<h1>webpass</h1>
+			<md-layout md-column>
+				<md-toolbar>
+					<h1 class="md-title">webpass</h1>
+				</md-toolbar>
+				<md-layout id="main-layout" md-row md-gutter>
+					<md-layout md-column md-gutter>
+						<md-input-container>
+							<md-input type="search" v-model="query" placeholder="Search a password..."></md-input>
+						</md-input-container>
+						<md-list id="main-list">
+							<md-list-item v-for="item in filteredItems" @click="show(item)">{{ item }}</md-list-item>
+						</md-list>
+					</md-layout>
+					<md-layout md-gutter v-if="selectedItem">
+						<div>
+							<h2>{{ selectedItem.name }}</h2>
+							<pre>{{ selectedItem.password }}</pre>
+							<pre>{{ selectedItem.metadata.join('\n') }}</pre>
+						</div>
+					</md-layout>
+				</md-layout>
+			</md-layout>
 
-			<input type="search" v-model="query" placeholder="Search a password..." autofocus>
-			<ul>
-				<li v-for="item in filteredItems">
-					<a href="#" v-on:click.prevent="show(item)">{{ item }}</a>
-				</li>
-			</ul>
+			<ask-pass ref="ask-pass"></ask-pass>
 
-			<ask-pass v-if="unlock" v-on:submit="unlock"></ask-pass>
-
-			<div v-if="selectedItem">
-				<h2>{{ selectedItem.name }}</h2>
-				<pre>{{ selectedItem.password }}</pre>
-				<pre>{{ selectedItem.metadata }}</pre>
-			</div>
+			<md-snackbar ref="error-bar">{{ error }}</md-snackbar>
 		</div>
 
 		<template id="ask-pass-template">
-			<form v-on:submit.prevent="submit()">
-				<h2>unlock private key</h2>
-				<p>A passphrase is required to unlock the OpenPGP private key.</p>
-				<p><input type="password" v-model="passphrase"></p>
-				<p>
-					<button type="button" v-on:click="cancel">cancel</button>
-					<button type="submit">unlock</button>
-				</p>
-			</form>
+			<md-dialog ref="ask-pass-dialog">
+				<form v-on:submit.prevent="submit()">
+					<md-dialog-title>Unlock private key</md-dialog-title>
+					<md-dialog-content>
+						<p>A passphrase is required to unlock the OpenPGP private key.</p>
+						<md-input-container>
+							<md-input type="password" v-model="passphrase" ref="passphrase"></md-input>
+						</md-input-container>
+					</md-dialog-content>
+					<md-dialog-actions>
+						<md-button v-on:click="cancel">Cancel</md-button>
+						<md-button type="submit" class="md-primary">Unlock</md-button>
+					</md-dialog-actions>
+				</form>
+			</md-dialog>
 		</template>
 
 		<script type="text/javascript" src="js/askpass.js"></script>

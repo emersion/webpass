@@ -3,14 +3,41 @@ Vue.component('ask-pass', {
 	data: () => {
 		return {
 			passphrase: '',
+			submit: () => {},
+			cancel: () => {},
 		}
 	},
 	methods: {
-		submit() {
-			this.$emit('submit', this.passphrase)
+		ask() {
+			const dialog = this.$refs['ask-pass-dialog']
+
+			return new Promise((resolve, reject) => {
+				this.submit = () => {
+					const passphrase = this.passphrase
+					dialog.close()
+					resolve(passphrase)
+				}
+
+				this.cancel = () => {
+					dialog.close()
+					reject()
+				}
+
+				dialog.open()
+			})
 		},
-		cancel() {
-			this.$emit('submit', null)
-		},
+	},
+	mounted() {
+		const dialog = this.$refs['ask-pass-dialog']
+
+		dialog.$on('open', () => {
+			setTimeout(() => {
+				this.$refs['passphrase'].$el.focus()
+			}, 0)
+		})
+
+		dialog.$on('close', () => {
+			this.passphrase = ''
+		})
 	},
 })
