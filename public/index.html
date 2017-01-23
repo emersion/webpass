@@ -44,9 +44,9 @@
 		<template id="ask-pass-template">
 			<md-dialog ref="ask-pass-dialog">
 				<form v-on:submit.prevent="submit()">
-					<md-dialog-title>Unlock private key</md-dialog-title>
+					<md-dialog-title>{{ title }}</md-dialog-title>
 					<md-dialog-content>
-						<p>A passphrase is required to unlock the OpenPGP private key.</p>
+						<p>{{ description }}</p>
 						<md-input-container>
 							<md-input type="password" v-model="passphrase" ref="passphrase"></md-input>
 						</md-input-container>

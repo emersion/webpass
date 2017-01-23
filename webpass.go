@@ -1,29 +1,54 @@
 package webpass
 
 import (
-	"io"
 	"net/http"
 
-	"github.com/emersion/webpass/pass"
 	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
 )
 
-type Config struct {
-	Host string
-	Store *pass.Store
-	OpenPGPKey func() (io.ReadCloser, error)
+func userFrom(c echo.Context) User {
+	v := c.Get("user")
+	if v == nil {
+		return nil
+	}
+	u, ok := v.(User)
+	if !ok {
+		return nil
+	}
+	return u
 }
 
-func Start(e *echo.Echo, cfg *Config) error {
-	e.GET("/pass/store", func(c echo.Context) error {
-		list, err := cfg.Store.List()
+type Server struct {
+	Host string
+	Backend Backend
+}
+
+func (s *Server) Start(e *echo.Echo) error {
+	g := e.Group("/pass")
+
+	g.Use(middleware.BasicAuth(func(username, password string, c echo.Context) bool {
+		u, err := s.Backend.Auth(username, password)
+		if err != nil {
+			if err != ErrInvalidCredentials {
+				e.Logger.Error("Cannot authenticate user:", err)
+			}
+			return false
+		}
+
+		c.Set("user", u)
+		return true
+	}))
+
+	g.GET("/store", func(c echo.Context) error {
+		list, err := userFrom(c).Store().List()
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, newAPIError(err))
 		}
 		return c.JSON(http.StatusOK, list)
 	})
-	e.GET("/pass/store/*.gpg", func(c echo.Context) error {
-		r, err := cfg.Store.Open(c.Param("*"))
+	g.GET("/store/*.gpg", func(c echo.Context) error {
+		r, err := userFrom(c).Store().Open(c.Param("*"))
 		if err != nil {
 			return c.JSON(http.StatusNotFound, newAPIError(err))
 		}
@@ -31,8 +56,8 @@ func Start(e *echo.Echo, cfg *Config) error {
 
 		return c.Stream(http.StatusOK, "application/pgp-encrypted", r)
 	})
-	e.GET("/pass/keys.gpg", func(c echo.Context) error {
-		r, err := cfg.OpenPGPKey()
+	g.GET("/keys.gpg", func(c echo.Context) error {
+		r, err := userFrom(c).OpenPGPKey()
 		if err != nil {
 			return c.JSON(http.StatusNotFound, newAPIError(err))
 		}
@@ -44,7 +69,7 @@ func Start(e *echo.Echo, cfg *Config) error {
 	e.Static("/node_modules", "node_modules")
 	e.Static("/", "public")
 
-	return e.Start(cfg.Host)
+	return e.Start(s.Host)
 }
 
 type apiError struct {

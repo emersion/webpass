@@ -1,0 +1,15 @@
+[Unit]
+Description=webpass
+After=network.target
+
+[Service]
+Type=simple
+User=user
+Group=user
+WorkingDirectory=/home/user
+ExecStart=/home/user/go/bin/webpass
+Restart=always
+Environment=PORT=8080
+
+[Install]
+WantedBy=multi-user.target
