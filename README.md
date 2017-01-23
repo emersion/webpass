@@ -5,7 +5,7 @@ A web interface for [pass](https://www.passwordstore.org/), a UNIX password mana
 ## Usage
 
 ```shell
-go get -u github.com/emersion/webpass
+go get -u github.com/emersion/webpass/...
 
 gpg --export-secret-keys > private-key.gpg
 webpass
