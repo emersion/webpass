@@ -36,7 +36,8 @@
 				</md-layout>
 			</md-layout>
 
-			<ask-pass ref="ask-pass"></ask-pass>
+			<ask-pass ref="login-ask-pass" title="Login" description="Please enter your credentials."></ask-pass>
+			<ask-pass ref="pgp-ask-pass" title="Unlock private key" description="A passphrase is required to unlock the OpenPGP private key."></ask-pass>
 
 			<md-snackbar ref="error-bar">{{ error }}</md-snackbar>
 		</div>
@@ -59,7 +60,7 @@
 			</md-dialog>
 		</template>
 
-		<script type="text/javascript" src="js/askpass.js"></script>
+		<script type="text/javascript" src="js/ask-pass.js"></script>
 		<script type="text/javascript" src="js/main.js"></script>
 	</body>
 </html>

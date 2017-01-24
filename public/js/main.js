@@ -82,10 +82,7 @@ new Vue({
 
 				keys = keys.filter(key => key.verifyPrimaryKey() === openpgp.enums.keyStatus.valid)
 
-				return this.$refs['ask-pass'].ask({
-					title: 'Unlock private key',
-					description: 'A passphrase is required to unlock the OpenPGP private key.',
-				})
+				return this.$refs['pgp-ask-pass'].ask()
 				.catch(() => {
 					throw errCancelled
 				})
@@ -131,10 +128,7 @@ new Vue({
 			})
 			.catch(err => {
 				if (err == errUnauthorized) {
-					return this.$refs['ask-pass'].ask({
-						title: 'Login',
-						description: 'Please enter your credentials.',
-					})
+					return this.$refs['ask-pass'].ask()
 					.catch(() => {
 						throw errCancelled
 					})

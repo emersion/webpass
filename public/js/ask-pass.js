@@ -2,18 +2,14 @@ Vue.component('ask-pass', {
 	template: '#ask-pass-template',
 	data: () => {
 		return {
-			title: '',
-			description: '',
 			passphrase: '',
 			submit: () => {},
 			cancel: () => {},
 		}
 	},
+	props: ['title', 'description'],
 	methods: {
-		ask(options) {
-			this.title = options.title
-			this.description = options.description
-
+		ask() {
 			const dialog = this.$refs['ask-pass-dialog']
 
 			return new Promise((resolve, reject) => {
