@@ -117,6 +117,20 @@ new Vue({
 			this.error = err.toString()
 			this.$refs['error-bar'].open()
 		},
+		copySelectedPassword() {
+			const sel = window.getSelection()
+
+			let ok = false
+			try {
+				sel.selectAllChildren(this.$refs['password-text'])
+				ok = document.execCommand('copy')
+			} catch (err) {}
+			if (!ok) {
+				this.showError('Could not copy password')
+			}
+
+			sel.removeAllRanges()
+		},
 	},
 	mounted() {
 		const list = () => {

@@ -26,12 +26,15 @@
 							<md-list-item v-for="item in filteredItems" @click="show(item)">{{ item }}</md-list-item>
 						</md-list>
 					</md-layout>
-					<md-layout md-gutter v-if="selectedItem">
-						<div>
-							<h2>{{ selectedItem.name }}</h2>
-							<pre>{{ selectedItem.password }}</pre>
-							<pre>{{ selectedItem.metadata.join('\n') }}</pre>
-						</div>
+					<md-layout md-column v-if="selectedItem">
+						<h2>{{ selectedItem.name }}</h2>
+						<md-layout md-row md-flex="5">
+							<md-layout>
+								<pre ref="password-text">{{ selectedItem.password }}</pre>
+							</md-layout>
+							<md-button @click="copySelectedPassword()">Copy</md-button>
+						</md-layout>
+						<pre>{{ selectedItem.metadata.join('\n') }}</pre>
 					</md-layout>
 				</md-layout>
 			</md-layout>
