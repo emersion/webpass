@@ -128,7 +128,7 @@ new Vue({
 			})
 			.catch(err => {
 				if (err == errUnauthorized) {
-					return this.$refs['ask-pass'].ask()
+					return this.$refs['login-ask-pass'].ask()
 					.catch(() => {
 						throw errCancelled
 					})
