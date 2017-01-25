@@ -1,44 +1,23 @@
 package main
 
 import (
-	"errors"
 	"io"
 	"os"
-	osuser "os/user"
 
 	"github.com/emersion/webpass"
+	//"github.com/emersion/webpass/backend/pam"
+	"github.com/emersion/webpass/backend/public"
 	"github.com/emersion/webpass/pass"
 	"github.com/labstack/echo"
-	"github.com/msteinert/pam"
 )
 
 type backend struct {
-	username string
+	auth func(username, password string) error
 }
 
 func (be *backend) Auth(username, password string) (webpass.User, error) {
-	if username == "" {
-		username = be.username
-	}
-	if username != be.username || password == "" {
-		return nil, webpass.ErrInvalidCredentials
-	}
-
-	t, err := pam.StartFunc("", username, func(s pam.Style, msg string) (string, error) {
-		switch s {
-		case pam.PromptEchoOff:
-			return password, nil
-		case pam.PromptEchoOn, pam.ErrorMsg, pam.TextInfo:
-			return "", nil
-		}
-		return "", errors.New("Unrecognized PAM message style")
-	})
-	if err != nil {
+	if err := be.auth(username, password); err != nil {
 		return nil, err
-	}
-
-	if err := t.Authenticate(0); err != nil {
-		return nil, webpass.ErrInvalidCredentials
 	}
 
 	u := &user{pass.NewDefaultStore()}
@@ -60,12 +39,8 @@ func (u *user) OpenPGPKey() (io.ReadCloser, error) {
 func main() {
 	e := echo.New()
 
-	u, err := osuser.Current()
-	if err != nil {
-		e.Logger.Fatal(err)
-	}
-
-	be := &backend{username: u.Username}
+	//be := &backend{auth: pam.NewAuth()}
+	be := &backend{auth: public.Auth}
 
 	host := ":8080"
 	if port := os.Getenv("PORT"); port != "" {
