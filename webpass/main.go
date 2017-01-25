@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/emersion/webpass"
-	//"github.com/emersion/webpass/backend/pam"
+	"github.com/emersion/webpass/backend/pam"
 	"github.com/emersion/webpass/backend/public"
 	"github.com/emersion/webpass/pass"
 	"github.com/labstack/echo"
@@ -36,11 +36,27 @@ func (u *user) OpenPGPKey() (io.ReadCloser, error) {
 	return os.Open("private-key.gpg")
 }
 
+type config struct {
+	Auth string `json:"auth"`
+}
+
+func (c *config) backend() webpass.Backend {
+	be := new(backend)
+
+	switch c.Auth {
+	case "none":
+		be.auth = public.Auth
+	default: // "pam"
+		be.auth = pam.NewAuth()
+	}
+
+	return be
+}
+
 func main() {
 	e := echo.New()
 
-	//be := &backend{auth: pam.NewAuth()}
-	be := &backend{auth: public.Auth}
+	cfg := new(config)
 
 	host := ":8080"
 	if port := os.Getenv("PORT"); port != "" {
@@ -49,7 +65,7 @@ func main() {
 
 	s := &webpass.Server{
 		Host: host,
-		Backend: be,
+		Backend: cfg.backend(),
 	}
 
 	e.Logger.Fatal(s.Start(e))
