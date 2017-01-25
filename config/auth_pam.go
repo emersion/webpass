@@ -1,17 +1,23 @@
-package pam
+// +build linux darwin
+
+package config
 
 import (
 	"errors"
-	"os/user"
+	osuser "os/user"
 
 	"github.com/emersion/webpass"
 	"github.com/msteinert/pam"
 )
 
-func NewAuth() func(username, password string) error {
-	u, err := user.Current()
+func init() {
+	auths["pam"] = createAuthPAM
+}
+
+func createAuthPAM() (AuthFunc, error) {
+	u, err := osuser.Current()
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	requiredUsername := u.Username
 
@@ -41,5 +47,5 @@ func NewAuth() func(username, password string) error {
 		}
 
 		return nil
-	}
+	}, nil
 }
