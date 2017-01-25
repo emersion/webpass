@@ -41,6 +41,7 @@
 
 			<ask-pass ref="login-ask-pass" title="Login" description="Please enter your credentials."></ask-pass>
 			<ask-pass ref="pgp-ask-pass" title="Unlock private key" description="A passphrase is required to unlock the OpenPGP private key."></ask-pass>
+			<ask-file ref="pgp-ask-key" title="Select private key" description="An OpenPGP private key is needed to decrypt passwords." placeholder="OpenPGP private key"></ask-file>
 
 			<md-snackbar ref="error-bar">{{ error }}</md-snackbar>
 		</div>
@@ -63,7 +64,25 @@
 			</md-dialog>
 		</template>
 
+		<template id="ask-file-template">
+			<md-dialog ref="ask-file-dialog">
+				<form>
+					<md-dialog-title>{{ title }}</md-dialog-title>
+					<md-dialog-content>
+						<p>{{ description }}</p>
+						<p>
+							<input type="file" @change="submit" required>
+						</p>
+					</md-dialog-content>
+					<md-dialog-actions>
+						<md-button v-on:click="cancel">Cancel</md-button>
+					</md-dialog-actions>
+				</form>
+			</md-dialog>
+		</template>
+
 		<script type="text/javascript" src="js/ask-pass.js"></script>
+		<script type="text/javascript" src="js/ask-file.js"></script>
 		<script type="text/javascript" src="js/main.js"></script>
 	</body>
 </html>

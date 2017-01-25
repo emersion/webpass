@@ -20,6 +20,9 @@ item, your PGP key password will be prompted and the password will be displayed.
 
 You can now setup an HTTPS reverse proxy to webpass.
 
+You can also choose not to store your encrypted PGP private key on the server,
+in this case you'll have to carry it with you e.g. on a USB stick.
+
 ## Security
 
 Once logged in, the encrypted PGP key and the encrypted passwords will be served

@@ -15,6 +15,21 @@ function checkResponse(res) {
 	throw new Error(res.statusText)
 }
 
+function readFile(file) {
+	return new Promise((resolve, reject) => {
+		const reader = new FileReader()
+
+		reader.addEventListener('load', event => {
+			resolve(event.target.result)
+		})
+		reader.addEventListener('error', event => {
+			reject(event.target.error)
+		})
+
+		reader.readAsArrayBuffer(file)
+	})
+}
+
 new Vue({
 	el: '#app',
 	data: {
@@ -71,8 +86,15 @@ new Vue({
 			}
 
 			return this.request('pass/keys.gpg')
-			.then(checkResponse)
-			.then(res => res.arrayBuffer())
+			.then(res => {
+				if (res.status == 404) {
+					return this.$refs['pgp-ask-key'].ask()
+					.then(readFile)
+				}
+
+				return checkResponse(res)
+				.then(res => res.arrayBuffer())
+			})
 			.then(buf => openpgp.armor.encode(openpgp.enums.armor.private_key, new Uint8Array(buf)))
 			.then(armored => {
 				let { keys, err=[] } = openpgp.key.readArmored(armored)
