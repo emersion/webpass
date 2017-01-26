@@ -14,6 +14,7 @@ type Backend interface {
 }
 
 type User interface {
-	Store() *pass.Store
+	pass.Store
+
 	OpenPGPKey() (io.ReadCloser, error)
 }

@@ -58,14 +58,14 @@ func (s *Server) Start(e *echo.Echo) error {
 	}))
 
 	g.GET("/store", func(c echo.Context) error {
-		list, err := userFrom(c).Store().List()
+		list, err := userFrom(c).List()
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, newAPIError(err))
 		}
 		return c.JSON(http.StatusOK, list)
 	})
 	g.GET("/store/*.gpg", func(c echo.Context) error {
-		r, err := userFrom(c).Store().Open(c.Param("*"))
+		r, err := userFrom(c).Open(c.Param("*"))
 		if err != nil {
 			return c.JSON(http.StatusNotFound, newAPIError(err))
 		}
