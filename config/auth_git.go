@@ -1,22 +1,22 @@
 package config
 
 import (
-	"encoding/json"
-	"io"
-	"io/ioutil"
-	"path/filepath"
-	"strings"
 	"crypto/x509"
+	"encoding/json"
 	"encoding/pem"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"net/url"
+	"path/filepath"
+	"strings"
 
 	"github.com/emersion/webpass"
 	"github.com/emersion/webpass/pass"
+	"golang.org/x/crypto/ssh"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 	"gopkg.in/src-d/go-git.v4/plumbing/transport"
-	"golang.org/x/crypto/ssh"
 	transporthttp "gopkg.in/src-d/go-git.v4/plumbing/transport/http"
 	transportssh "gopkg.in/src-d/go-git.v4/plumbing/transport/ssh"
 )
@@ -26,7 +26,7 @@ func init() {
 }
 
 type gitConfig struct {
-	URL string `json:"url"`
+	URL        string `json:"url"`
 	PrivateKey string `json:"privatekey,omitempty"`
 }
 
@@ -41,7 +41,7 @@ func createAuthGit(rawConfig json.RawMessage) (AuthFunc, error) {
 
 		ustr := cfg.URL
 		if !strings.Contains(ustr, "://") {
-			ustr = "ssh://"+ustr
+			ustr = "ssh://" + ustr
 		}
 
 		u, err := url.Parse(ustr)
@@ -105,8 +105,8 @@ func createAuthGit(rawConfig json.RawMessage) (AuthFunc, error) {
 		}
 
 		err = r.Clone(&git.CloneOptions{
-			URL: cfg.URL,
-			Auth: auth,
+			URL:   cfg.URL,
+			Auth:  auth,
 			Depth: 1,
 		})
 		if err == transport.ErrAuthorizationRequired {

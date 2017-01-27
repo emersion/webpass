@@ -51,7 +51,7 @@ func newAPIError(err error) *apiError {
 }
 
 type Server struct {
-	Addr string
+	Addr    string
 	Backend Backend
 
 	sessions map[string]User
@@ -59,7 +59,7 @@ type Server struct {
 
 func NewServer(be Backend) *Server {
 	return &Server{
-		Backend: be,
+		Backend:  be,
 		sessions: make(map[string]User),
 	}
 }

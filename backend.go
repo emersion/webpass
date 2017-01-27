@@ -9,7 +9,7 @@ import (
 
 var (
 	ErrInvalidCredentials = errors.New("webpass: invalid credentials")
-	ErrNoSuchKey = errors.New("webpass: no such key")
+	ErrNoSuchKey          = errors.New("webpass: no such key")
 )
 
 type Backend interface {

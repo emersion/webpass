@@ -15,7 +15,7 @@ func main() {
 
 	addr := ":8080"
 	if port := os.Getenv("PORT"); port != "" {
-		addr = ":"+port
+		addr = ":" + port
 	}
 
 	cfg, err := config.Open("config.json")
