@@ -9,7 +9,7 @@ Vue.component('ask-file', {
 	props: ['title', 'description'],
 	methods: {
 		ask() {
-			const dialog = this.$refs['ask-file-dialog']
+			const dialog = this.$refs.dialog
 
 			return new Promise((resolve, reject) => {
 				this.submit = (event) => {

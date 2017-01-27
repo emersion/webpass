@@ -39,15 +39,36 @@
 				</md-layout>
 			</md-layout>
 
-			<ask-pass ref="login-ask-pass" title="Login" description="Please enter your credentials."></ask-pass>
+			<ask-creds ref="login-ask-pass" title="Login" description="Please enter your credentials."></ask-creds>
 			<ask-pass ref="pgp-ask-pass" title="Unlock private key" description="A passphrase is required to unlock the OpenPGP private key."></ask-pass>
-			<ask-file ref="pgp-ask-key" title="Select private key" description="An OpenPGP private key is needed to decrypt passwords." placeholder="OpenPGP private key"></ask-file>
+			<ask-file ref="pgp-ask-key" title="Select private key" description="An OpenPGP private key is needed to decrypt passwords."></ask-file>
 
 			<md-snackbar ref="error-bar">{{ error }}</md-snackbar>
 		</div>
 
+		<template id="ask-creds-template">
+			<md-dialog ref="dialog">
+				<form v-on:submit.prevent="submit()">
+					<md-dialog-title>{{ title }}</md-dialog-title>
+					<md-dialog-content>
+						<p>{{ description }}</p>
+						<md-input-container>
+							<md-input type="text" v-model="username" placeholder="Username" ref="username"></md-input>
+						</md-input-container>
+						<md-input-container>
+							<md-input type="password" v-model="password" placeholder="Password" ref="password"></md-input>
+						</md-input-container>
+					</md-dialog-content>
+					<md-dialog-actions>
+						<md-button v-on:click="cancel">Cancel</md-button>
+						<md-button type="submit" class="md-primary">Login</md-button>
+					</md-dialog-actions>
+				</form>
+			</md-dialog>
+		</template>
+
 		<template id="ask-pass-template">
-			<md-dialog ref="ask-pass-dialog">
+			<md-dialog ref="dialog">
 				<form v-on:submit.prevent="submit()">
 					<md-dialog-title>{{ title }}</md-dialog-title>
 					<md-dialog-content>
@@ -65,7 +86,7 @@
 		</template>
 
 		<template id="ask-file-template">
-			<md-dialog ref="ask-file-dialog">
+			<md-dialog ref="dialog">
 				<form>
 					<md-dialog-title>{{ title }}</md-dialog-title>
 					<md-dialog-content>
@@ -81,6 +102,7 @@
 			</md-dialog>
 		</template>
 
+		<script type="text/javascript" src="js/ask-creds.js"></script>
 		<script type="text/javascript" src="js/ask-pass.js"></script>
 		<script type="text/javascript" src="js/ask-file.js"></script>
 		<script type="text/javascript" src="js/main.js"></script>

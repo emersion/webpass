@@ -3,10 +3,10 @@ package config
 import (
 	"encoding/json"
 	"io"
-	"os"
 	"path/filepath"
 
 	"github.com/emersion/webpass"
+	"github.com/emersion/webpass/pass"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 	"gopkg.in/src-d/go-git.v4/plumbing/transport"
@@ -27,7 +27,7 @@ func createAuthGit(rawConfig json.RawMessage) (AuthFunc, error) {
 		return nil, err
 	}
 
-	return func(username, password string) (webpass.User, error) {
+	return func(username, password string) (pass.Store, error) {
 		r := git.NewMemoryRepository()
 
 		var auth transport.AuthMethod = http.NewBasicAuth(username, password)
@@ -36,11 +36,13 @@ func createAuthGit(rawConfig json.RawMessage) (AuthFunc, error) {
 			Auth: auth,
 			Depth: 1,
 		})
-		if err != nil {
+		if err == transport.ErrAuthorizationRequired {
+			return nil, webpass.ErrInvalidCredentials
+		} else if err != nil {
 			return nil, err
 		}
 
-		return &gitUser{&gitStore{r}}, nil
+		return &gitStore{r}, nil
 	}, nil
 }
 
@@ -95,12 +97,4 @@ func (s *gitStore) Open(name string) (io.ReadCloser, error) {
 	}
 
 	return f.Reader()
-}
-
-type gitUser struct {
-	*gitStore
-}
-
-func (u *gitUser) OpenPGPKey() (io.ReadCloser, error) {
-	return os.Open("private-key.gpg")
 }

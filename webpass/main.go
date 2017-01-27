@@ -6,14 +6,16 @@ import (
 	"github.com/emersion/webpass"
 	"github.com/emersion/webpass/config"
 	"github.com/labstack/echo"
+	"github.com/labstack/gommon/log"
 )
 
 func main() {
 	e := echo.New()
+	e.Logger.SetLevel(log.DEBUG)
 
-	host := ":8080"
+	addr := ":8080"
 	if port := os.Getenv("PORT"); port != "" {
-		host = ":"+port
+		addr = ":"+port
 	}
 
 	cfg, err := config.Open("config.json")
@@ -28,10 +30,8 @@ func main() {
 		e.Logger.Fatal(err)
 	}
 
-	s := &webpass.Server{
-		Host: host,
-		Backend: be,
-	}
+	s := webpass.NewServer(be)
+	s.Addr = addr
 
 	e.Logger.Fatal(s.Start(e))
 }

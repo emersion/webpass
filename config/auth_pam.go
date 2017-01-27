@@ -8,6 +8,7 @@ import (
 	osuser "os/user"
 
 	"github.com/emersion/webpass"
+	"github.com/emersion/webpass/pass"
 	"github.com/msteinert/pam"
 )
 
@@ -22,7 +23,7 @@ func createAuthPAM(json.RawMessage) (AuthFunc, error) {
 	}
 	requiredUsername := u.Username
 
-	return func(username, password string) (webpass.User, error) {
+	return func(username, password string) (pass.Store, error) {
 		if username == "" {
 			username = requiredUsername
 		}

@@ -11,7 +11,7 @@ import (
 )
 
 type (
-	AuthFunc       func(username, password string) (webpass.User, error)
+	AuthFunc       func(username, password string) (pass.Store, error)
 	AuthCreateFunc func(config json.RawMessage) (AuthFunc, error)
 )
 
@@ -22,13 +22,18 @@ type backend struct {
 }
 
 func (be *backend) Auth(username, password string) (webpass.User, error) {
-	u, err := be.auth(username, password)
+	s, err := be.auth(username, password)
 	if err != nil {
 		return nil, err
 	}
 
-	if u == nil {
-		u = &user{pass.NewDefaultStore()}
+	if s == nil {
+		s = pass.NewDefaultStore()
+	}
+
+	u, ok := s.(webpass.User)
+	if !ok {
+		u = &user{s}
 	}
 	return u, nil
 }
@@ -38,7 +43,11 @@ type user struct {
 }
 
 func (u *user) OpenPGPKey() (io.ReadCloser, error) {
-	return os.Open("private-key.gpg")
+	f, err := os.Open("private-key.gpg")
+	if os.IsNotExist(err) {
+		return nil, webpass.ErrNoSuchKey
+	}
+	return f, err
 }
 
 type authConfig struct {

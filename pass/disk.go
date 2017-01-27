@@ -63,5 +63,10 @@ func (s *diskStore) Open(item string) (io.ReadCloser, error) {
 		// Make sure the requested item is *in* the password store
 		return nil, errors.New("invalid item path")
 	}
-	return os.Open(p)
+
+	f, err := os.Open(p)
+	if os.IsNotExist(err) {
+		return nil, ErrNotFound
+	}
+	return f, err
 }

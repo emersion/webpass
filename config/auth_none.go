@@ -3,7 +3,7 @@ package config
 import (
 	"encoding/json"
 
-	"github.com/emersion/webpass"
+	"github.com/emersion/webpass/pass"
 )
 
 func init() {
@@ -11,7 +11,7 @@ func init() {
 }
 
 func createAuthNone(json.RawMessage) (AuthFunc, error) {
-	return func(username, password string) (webpass.User, error) {
+	return func(username, password string) (pass.Store, error) {
 		return nil, nil
 	}, nil
 }

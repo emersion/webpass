@@ -7,7 +7,10 @@ import (
 	"github.com/emersion/webpass/pass"
 )
 
-var ErrInvalidCredentials = errors.New("Invalid credentials")
+var (
+	ErrInvalidCredentials = errors.New("webpass: invalid credentials")
+	ErrNoSuchKey = errors.New("webpass: no such key")
+)
 
 type Backend interface {
 	Auth(username, password string) (User, error)

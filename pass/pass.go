@@ -1,8 +1,11 @@
 package pass
 
 import (
+	"errors"
 	"io"
 )
+
+var ErrNotFound = errors.New("pass: not found")
 
 type Store interface {
 	List() ([]string, error)
