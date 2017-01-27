@@ -1,8 +1,9 @@
-Vue.component('ask-pass', {
-	template: '#ask-pass-template',
+Vue.component('ask-creds', {
+	template: '#ask-creds-template',
 	data: () => {
 		return {
-			passphrase: '',
+			username: '',
+			password: '',
 			submit: () => {},
 			cancel: () => {},
 		}
@@ -14,9 +15,12 @@ Vue.component('ask-pass', {
 
 			return new Promise((resolve, reject) => {
 				this.submit = () => {
-					const passphrase = this.passphrase
+					const creds = {
+						username: this.username,
+						password: this.password,
+					}
 					dialog.close()
-					resolve(passphrase)
+					resolve(creds)
 				}
 
 				this.cancel = () => {
@@ -32,11 +36,12 @@ Vue.component('ask-pass', {
 		const dialog = this.$refs.dialog
 
 		dialog.$on('open', () => {
-			this.$nextTick(() => this.$refs.passphrase.$el.focus())
+			this.$nextTick(() => this.$refs.username.$el.focus())
 		})
 
 		dialog.$on('close', () => {
-			this.passphrase = ''
+			this.username = ''
+			this.password = ''
 		})
 	},
 })

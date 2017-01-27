@@ -33,10 +33,7 @@ function readFile(file) {
 new Vue({
 	el: '#app',
 	data: {
-		credentials: {
-			username: '',
-			password: '',
-		},
+		key: '',
 		query: '',
 		items: [],
 		selectedItem: null,
@@ -52,19 +49,44 @@ new Vue({
 		},
 	},
 	methods: {
-		request(url) {
-			const h = new Headers()
-			if (this.credentials.username !== "" || this.credentials.password !== "") {
-				h.set('Authorization', 'Basic '+btoa(this.credentials.username+':'+this.credentials.password))
+		request(url, init) {
+			if (!init) {
+				init = {}
+			}
+			if (!init.headers) {
+				init.headers = new Headers()
 			}
 
-			return fetch(url, {
-				credentials: 'include',
-				headers: h,
+			init.credentials = 'include'
+			if (this.key !== "") {
+				init.headers.set('Authorization', 'Bearer '+this.key)
+			}
+
+			return fetch('pass'+url, init)
+		},
+		auth(username, password) {
+			return this.request('/auth', {
+				method: 'POST',
+				body: JSON.stringify({username, password}),
+				headers: new Headers({'Content-Type': 'application/json'}),
+			})
+			.then(checkResponse)
+			.then(res => res.json())
+			.then(data => {
+				this.key = data.key
 			})
 		},
+		list() {
+			return this.request('/store')
+			.then(checkResponse)
+			.then(res => res.json())
+			.then(items => {
+				this.items = items.map(item => item.replace(/\.gpg$/, ''))
+			})
+			.catch(this.showError)
+		},
 		show(name) {
-			return this.request('pass/store/'+name+'.gpg')
+			return this.request('/store/'+name+'.gpg')
 			.then(checkResponse)
 			.then(res => res.arrayBuffer())
 			.then(buf => this.decrypt(buf))
@@ -85,7 +107,7 @@ new Vue({
 				return this.keys
 			}
 
-			return this.request('pass/keys.gpg')
+			return this.request('/keys.gpg')
 			.then(res => {
 				if (res.status == 404) {
 					return this.$refs['pgp-ask-key'].ask()
@@ -155,29 +177,14 @@ new Vue({
 		},
 	},
 	mounted() {
-		const list = () => {
-			return this.request('pass/store')
-			.then(checkResponse)
-			.then(res => res.json())
-			.then(items => {
-				this.items = items.map(item => item.replace(/\.gpg$/, ''))
+		this.$nextTick(() => {
+			this.$refs['login-ask-pass'].ask()
+			.catch(() => {
+				throw errCancelled
 			})
-			.catch(err => {
-				if (err == errUnauthorized) {
-					return this.$refs['login-ask-pass'].ask()
-					.catch(() => {
-						throw errCancelled
-					})
-					.then(password => {
-						this.credentials.password = password
-					})
-					.then(list)
-				}
-				throw err
-			})
-		}
-
-		return list()
-		.catch(this.showError)
+			.then(creds => this.auth(creds.username, creds.password))
+			.then(this.list)
+			.catch(this.showError)
+		})
 	},
 })

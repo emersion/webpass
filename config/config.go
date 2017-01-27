@@ -10,8 +10,10 @@ import (
 	"github.com/emersion/webpass/pass"
 )
 
-type AuthFunc func(username, password string) error
-type AuthCreateFunc func() (AuthFunc, error)
+type (
+	AuthFunc       func(username, password string) (pass.Store, error)
+	AuthCreateFunc func(config json.RawMessage) (AuthFunc, error)
+)
 
 var auths = make(map[string]AuthCreateFunc)
 
@@ -20,33 +22,47 @@ type backend struct {
 }
 
 func (be *backend) Auth(username, password string) (webpass.User, error) {
-	if err := be.auth(username, password); err != nil {
+	s, err := be.auth(username, password)
+	if err != nil {
 		return nil, err
 	}
 
-	u := &user{pass.NewDefaultStore()}
+	if s == nil {
+		s = pass.NewDefaultStore()
+	}
+
+	u, ok := s.(webpass.User)
+	if !ok {
+		u = &user{s}
+	}
 	return u, nil
 }
 
 type user struct {
-	s *pass.Store
-}
-
-func (u *user) Store() *pass.Store {
-	return u.s
+	pass.Store
 }
 
 func (u *user) OpenPGPKey() (io.ReadCloser, error) {
-	return os.Open("private-key.gpg")
+	f, err := os.Open("private-key.gpg")
+	if os.IsNotExist(err) {
+		return nil, webpass.ErrNoSuchKey
+	}
+	return f, err
+}
+
+type authConfig struct {
+	Type string `json:"type"`
 }
 
 type Config struct {
-	Auth string `json:"auth"`
+	AuthType string `json:"-"`
+
+	Auth json.RawMessage `json:"auth"`
 }
 
 func New() *Config {
 	return &Config{
-		Auth: "pam",
+		AuthType: "pam",
 	}
 }
 
@@ -58,18 +74,27 @@ func Open(path string) (*Config, error) {
 	defer f.Close()
 
 	cfg := new(Config)
-	err = json.NewDecoder(f).Decode(cfg)
+	if err := json.NewDecoder(f).Decode(cfg); err != nil {
+		return nil, err
+	}
+
+	auth := new(authConfig)
+	if err := json.Unmarshal(cfg.Auth, auth); err != nil {
+		return nil, err
+	}
+	cfg.AuthType = auth.Type
+
 	return cfg, err
 }
 
 func (cfg *Config) Backend() (webpass.Backend, error) {
 	be := new(backend)
 
-	createAuth, ok := auths[cfg.Auth]
+	createAuth, ok := auths[cfg.AuthType]
 	if !ok {
 		return nil, fmt.Errorf("Unknown auth %q", cfg.Auth)
 	}
-	auth, err := createAuth()
+	auth, err := createAuth(cfg.Auth)
 	if err != nil {
 		return nil, err
 	}
