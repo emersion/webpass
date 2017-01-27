@@ -3,14 +3,22 @@ package config
 import (
 	"encoding/json"
 	"io"
+	"io/ioutil"
 	"path/filepath"
+	"strings"
+	"crypto/x509"
+	"encoding/pem"
+	"fmt"
+	"net/url"
 
 	"github.com/emersion/webpass"
 	"github.com/emersion/webpass/pass"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 	"gopkg.in/src-d/go-git.v4/plumbing/transport"
-	"gopkg.in/src-d/go-git.v4/plumbing/transport/http"
+	"golang.org/x/crypto/ssh"
+	transporthttp "gopkg.in/src-d/go-git.v4/plumbing/transport/http"
+	transportssh "gopkg.in/src-d/go-git.v4/plumbing/transport/ssh"
 )
 
 func init() {
@@ -19,6 +27,7 @@ func init() {
 
 type gitConfig struct {
 	URL string `json:"url"`
+	PrivateKey string `json:"privatekey,omitempty"`
 }
 
 func createAuthGit(rawConfig json.RawMessage) (AuthFunc, error) {
@@ -30,8 +39,72 @@ func createAuthGit(rawConfig json.RawMessage) (AuthFunc, error) {
 	return func(username, password string) (pass.Store, error) {
 		r := git.NewMemoryRepository()
 
-		var auth transport.AuthMethod = http.NewBasicAuth(username, password)
-		err := r.Clone(&git.CloneOptions{
+		ustr := cfg.URL
+		if !strings.Contains(ustr, "://") {
+			ustr = "ssh://"+ustr
+		}
+
+		u, err := url.Parse(ustr)
+		if err != nil {
+			return nil, err
+		}
+
+		var auth transport.AuthMethod
+		switch u.Scheme {
+		case "http", "https":
+			auth = transporthttp.NewBasicAuth(username, password)
+		case "git+ssh", "ssh", "":
+			if cfg.PrivateKey != "" {
+				b, err := ioutil.ReadFile(cfg.PrivateKey)
+				if err != nil {
+					return nil, err
+				}
+
+				block, _ := pem.Decode(b)
+				if block == nil {
+					return nil, fmt.Errorf("key is not PEM-encoded")
+				}
+
+				if x509.IsEncryptedPEMBlock(block) {
+					block.Bytes, err = x509.DecryptPEMBlock(block, []byte(password))
+					if err != nil {
+						return nil, err
+					}
+
+					procType := strings.Split(block.Headers["Proc-Type"], ",")
+					var newProcType []string
+					for _, t := range procType {
+						if t != "ENCRYPTED" {
+							newProcType = append(newProcType, t)
+						}
+					}
+					block.Headers["Proc-Type"] = strings.Join(newProcType, ",")
+				}
+
+				b = pem.EncodeToMemory(block)
+				signer, err := ssh.ParsePrivateKey(b)
+				if err != nil {
+					return nil, err
+				}
+
+				var user string
+				if u.User != nil {
+					user = u.User.Username()
+				}
+
+				auth = &transportssh.PublicKeys{
+					User:   user,
+					Signer: signer,
+				}
+			} else {
+				auth = &transportssh.Password{
+					User: username,
+					Pass: password,
+				}
+			}
+		}
+
+		err = r.Clone(&git.CloneOptions{
 			URL: cfg.URL,
 			Auth: auth,
 			Depth: 1,
