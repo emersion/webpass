@@ -171,3 +171,7 @@ func (s *gitStore) Open(name string) (io.ReadCloser, error) {
 
 	return f.Reader()
 }
+
+func (s *gitStore) Create(name string) (io.WriteCloser, error) {
+	return nil, fmt.Errorf("modifying git stores is not yet supported")
+}

@@ -11,10 +11,12 @@ type diskStore struct {
 	path string
 }
 
+func NewStore(path string) Store {
+	return &diskStore{path}
+}
+
 func NewDefaultStore() Store {
-	return &diskStore{
-		path: defaultStorePath(),
-	}
+	return NewStore(defaultStorePath())
 }
 
 func defaultStorePath() string {
@@ -57,11 +59,19 @@ func (s *diskStore) List() ([]string, error) {
 	return list, err
 }
 
-func (s *diskStore) Open(item string) (io.ReadCloser, error) {
+func (s *diskStore) itemPath(item string) (string, error) {
 	p := filepath.Join(s.path, item)
 	if !filepath.HasPrefix(p, s.path) {
 		// Make sure the requested item is *in* the password store
-		return nil, errors.New("invalid item path")
+		return "", errors.New("invalid item path")
+	}
+	return p, nil
+}
+
+func (s *diskStore) Open(item string) (io.ReadCloser, error) {
+	p, err := s.itemPath(item)
+	if err != nil {
+		return nil, err
 	}
 
 	f, err := os.Open(p)
@@ -69,4 +79,13 @@ func (s *diskStore) Open(item string) (io.ReadCloser, error) {
 		return nil, ErrNotFound
 	}
 	return f, err
+}
+
+func (s *diskStore) Create(item string) (io.WriteCloser, error) {
+	p, err := s.itemPath(item)
+	if err != nil {
+		return nil, err
+	}
+
+	return os.Create(p)
 }
