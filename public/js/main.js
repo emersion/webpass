@@ -114,7 +114,8 @@ new Vue({
 					.then(readFile)
 				}
 
-				return checkResponse(res)
+				return Promise.resolve(res)
+				.then(checkResponse)
 				.then(res => res.arrayBuffer())
 			})
 			.then(buf => openpgp.armor.encode(openpgp.enums.armor.private_key, new Uint8Array(buf)))

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"os"
 
 	"github.com/emersion/webpass"
@@ -9,7 +10,11 @@ import (
 	"github.com/labstack/gommon/log"
 )
 
+var configPath = flag.String("config", "config.json", "path to config file")
+
 func main() {
+	flag.Parse()
+
 	e := echo.New()
 	e.Logger.SetLevel(log.DEBUG)
 
@@ -18,7 +23,7 @@ func main() {
 		addr = ":" + port
 	}
 
-	cfg, err := config.Open("config.json")
+	cfg, err := config.Open(*configPath)
 	if os.IsNotExist(err) {
 		cfg = config.New()
 	} else if err != nil {

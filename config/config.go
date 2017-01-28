@@ -18,6 +18,7 @@ type (
 var auths = make(map[string]AuthCreateFunc)
 
 type backend struct {
+	config *Config
 	auth AuthFunc
 }
 
@@ -33,17 +34,30 @@ func (be *backend) Auth(username, password string) (webpass.User, error) {
 
 	u, ok := s.(webpass.User)
 	if !ok {
-		u = &user{s}
+		pgpConfig := be.config.PGP
+		if pgpConfig == nil {
+			pgpConfig = &PGPConfig{PrivateKey: "private-key.gpg"}
+		}
+
+		u = &user{
+			Store: s,
+			pgpConfig: pgpConfig,
+		}
 	}
 	return u, nil
 }
 
 type user struct {
 	pass.Store
+	pgpConfig *PGPConfig
 }
 
 func (u *user) OpenPGPKey() (io.ReadCloser, error) {
-	f, err := os.Open("private-key.gpg")
+	if u.pgpConfig == nil || u.pgpConfig.PrivateKey == "" {
+		return nil, webpass.ErrNoSuchKey
+	}
+
+	f, err := os.Open(u.pgpConfig.PrivateKey)
 	if os.IsNotExist(err) {
 		return nil, webpass.ErrNoSuchKey
 	}
@@ -56,8 +70,13 @@ type authConfig struct {
 
 type Config struct {
 	AuthType string `json:"-"`
+	PGP *PGPConfig `json:"pgp"`
 
-	Auth json.RawMessage `json:"auth"`
+	Auth json.RawMessage `json:"auth,omitempty"`
+}
+
+type PGPConfig struct{
+	PrivateKey string `json:"privatekey,omitempty"`
 }
 
 func New() *Config {
@@ -88,7 +107,7 @@ func Open(path string) (*Config, error) {
 }
 
 func (cfg *Config) Backend() (webpass.Backend, error) {
-	be := new(backend)
+	be := &backend{config: cfg}
 
 	createAuth, ok := auths[cfg.AuthType]
 	if !ok {
