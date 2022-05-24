@@ -1,3 +1,4 @@
+//go:build linux || darwin
 // +build linux darwin
 
 package config
@@ -48,6 +49,9 @@ func createAuthPAM(json.RawMessage) (AuthFunc, error) {
 			return nil, webpass.ErrInvalidCredentials
 		}
 
+		if err := t.AcctMgmt(0); err != nil {
+			return nil, webpass.ErrInvalidCredentials
+		}
 		return nil, nil
 	}, nil
 }
